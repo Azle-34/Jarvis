@@ -108,7 +108,7 @@ if __name__ == "__main__":
                     print("You said: " + command)
                     processCommand(command)
             elif "exit" in word.lower() or "shutdown" in word.lower():
-                speak("Goodbye!")
+                speak("Jarvis Exiting!")
                 exit()
 
         except sr.UnknownValueError:
