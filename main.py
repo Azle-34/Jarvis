@@ -2,8 +2,13 @@ import speech_recognition as sr
 import pyttsx3
 import webbrowser
 import music
+import requests
 import os
+from dotenv import load_dotenv
 
+load_dotenv()
+
+api_key = os.getenv("NEWS_API_KEY")
 recognizer = sr.Recognizer()
 recognizer.pause_threshold = 1.2
 
@@ -82,6 +87,15 @@ def processCommand(c):
 
     elif any(op in c.lower() for op in ["plus", "minus", "multiply", "times", " x ", "+", "-", "divided by"]):
         calculate(c)
+
+    elif any(word in c.lower() for word in ["news", "headlines", "updates"]):
+        r = requests.get(f"https://newsapi.org/v2/top-headlines?country=us&apiKey={api_key}")
+        if r.status_code == 200:
+            data = r.json()
+            articles = data.get("articles", [])
+            for article in articles:
+                speak(article['title'])
+
     else:
         speak("Sorry, I didn't understand that command.")
 
