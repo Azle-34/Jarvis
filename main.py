@@ -1,9 +1,11 @@
 import speech_recognition as sr
-import pyttsx3
+import edge_tts
+import asyncio
 import webbrowser
-import music
 import requests
 import os
+import pywhatkit
+import pygame
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -12,12 +14,25 @@ api_key = os.getenv("NEWS_API_KEY")
 recognizer = sr.Recognizer()
 recognizer.pause_threshold = 1.2
 
+pygame.mixer.init()
+
 def speak(text):
-    engine = pyttsx3.init()
-    engine.setProperty('rate', 185)
-    engine.say(text)
-    engine.runAndWait()
-    engine.stop()
+    async def generate_and_play():
+        communicate = edge_tts.Communicate(text, voice="en-US-GuyNeural")
+        await communicate.save("response.mp3")
+        pygame.mixer.music.load("response.mp3")
+        pygame.mixer.music.play()
+        while pygame.mixer.music.get_busy():
+            pygame.time.Clock().tick(10)
+        pygame.mixer.music.unload()  
+        os.remove("response.mp3")
+
+    asyncio.run(generate_and_play())
+
+def play_music(song_name):
+    import pywhatkit
+    speak(f"Playing {song_name} on YouTube")
+    pywhatkit.playonyt(song_name)
 
 def calculate(c):
     c = c.lower().replace("what is", "").replace("what's", "").strip()
@@ -55,15 +70,11 @@ def processCommand(c):
     elif any(phrase in c.lower() for phrase in ["play music", "play a song", "play a song for me", "play a song on youtube", "play a song on youtube for me"]):
         speak("What song would you like to listen to?")
         with sr.Microphone() as source:
-            r.adjust_for_ambient_noise(source, duration=0.5)
-            audio = r.listen(source, phrase_time_limit=8)
+            recognizer.adjust_for_ambient_noise(source, duration=0.5)
+            audio = recognizer.listen(source, phrase_time_limit=8)
         song = recognizer.recognize_google(audio).lower()
-        link = music.music.get(song)
-        if link:
-            speak(f"Playing {song}")
-            webbrowser.open(link)
-        else:
-            speak("Sorry, I don't have that song.")
+        play_music(song)  
+        
 
     elif "open notepad" in c.lower():
         speak("Opening Notepad")
